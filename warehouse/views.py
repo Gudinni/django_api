@@ -1,12 +1,13 @@
 from django.shortcuts import render
+from django.shortcuts import get_object_or_404
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, viewsets, permissions
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework.generics import CreateAPIView   
+from rest_framework.generics import CreateAPIView
 
-from django.shortcuts import get_object_or_404
 from .models import Warehouse, Product, Stock
 from .serializers import (
     RegisterSerializer, WarehouseSerializer, ProductSerializer,
@@ -30,7 +31,7 @@ class CustomAuthToken(ObtainAuthToken):
         serializer = self.serializer_class(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
-        token, created = Token.objects.get_or_create(user=user)
+        token, _ = Token.objects.get_or_create(user=user)
         return Response({
             'token': token.key,
             'user_type': user.user_type
@@ -59,7 +60,7 @@ class SupplyView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def post(self, request):
         if request.user.user_type != 'supplier':
-            return Response({"error": "Только поставщики могут поставлять товар"}, 
+            return Response({"error": "Только поставщики могут поставлять товар"},
                           status=status.HTTP_403_FORBIDDEN)
 
         serializer = SupplySerializer(data=request.data)
@@ -70,7 +71,7 @@ class SupplyView(APIView):
         product = get_object_or_404(Product, id=serializer.validated_data['product_id'])
         quantity = serializer.validated_data['quantity']
 
-        stock, created = Stock.objects.get_or_create(
+        stock, _ = Stock.objects.get_or_create(
             warehouse=warehouse, product=product, defaults={'quantity': 0}
         )
         stock.quantity += quantity
@@ -81,10 +82,10 @@ class SupplyView(APIView):
 
 class TakeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def post(self, request):
         if request.user.user_type != 'consumer':
-            return Response({"error": "Только потребители могут забирать товар"}, 
+            return Response({"error": "Только потребители могут забирать товар"},
                           status=status.HTTP_403_FORBIDDEN)
 
         serializer = TakeSerializer(data=request.data)
@@ -98,7 +99,7 @@ class TakeView(APIView):
         stock = get_object_or_404(Stock, warehouse=warehouse, product=product)
 
         if stock.quantity < quantity:
-            return Response({"error": "Недостаточно товара на складе"}, 
+            return Response({"error": "Недостаточно товара на складе"},
                           status=status.HTTP_400_BAD_REQUEST)
 
         stock.quantity -= quantity

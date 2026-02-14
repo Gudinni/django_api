@@ -129,7 +129,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication',
     ],
-    
+
 }
 
 AUTH_USER_MODEL = 'warehouse.User'

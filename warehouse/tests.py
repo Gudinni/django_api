@@ -9,12 +9,14 @@ User = get_user_model()
 class WarehouseAPITestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
-        self.register_url = '/api/register/'
-        self.login_url = '/api/login/'
-        self.warehouses_url = '/api/warehouses/'
-        self.products_url = '/api/products/'
-        self.supply_url = '/api/supply/'
-        self.take_url = '/api/take/'
+        self.urls = {
+            'register': '/api/register/',
+            'login': '/api/login/',
+            'warehouses': '/api/warehouses/',
+            'products': '/api/products/',
+            'supply': '/api/supply/',
+            'take': '/api/take/',
+        }
 
         self.supplier_data = {
             'username': 'supplier',
@@ -30,11 +32,11 @@ class WarehouseAPITestCase(APITestCase):
         }
 
     def register_user(self, data):
-        response = self.client.post(self.register_url, data)
+        response = self.client.post(self.urls['register'], data)
         return response
 
     def login_user(self, username, password):
-        response = self.client.post(self.login_url, {'username': username, 'password': password})
+        response = self.client.post(self.urls['login'], {'username': username, 'password': password})
         if response.status_code == 200:
             return response.data['token']
         return None
@@ -60,7 +62,7 @@ class WarehouseAPITestCase(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {token}')
 
         data = {'name': 'Test Warehouse'}
-        response = self.client.post(self.warehouses_url, data)
+        response = self.client.post(self.urls['warehouses'], data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Warehouse.objects.count(), 1)
 
@@ -70,37 +72,42 @@ class WarehouseAPITestCase(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {token}')
 
         data = {'name': 'Test Product'}
-        response = self.client.post(self.products_url, data)
+        response = self.client.post(self.urls['products'], data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Product.objects.count(), 1)
 
     def test_supply_by_supplier(self):
+        # Регистрация и логин поставщика
         self.register_user(self.supplier_data)
         token = self.login_user('supplier', 'testpass123')
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {token}')
 
+        # Создаём склад и товар
         warehouse = Warehouse.objects.create(name='Warehouse1', owner=User.objects.get(username='supplier'))
         product = Product.objects.create(name='Product1', creator=User.objects.get(username='supplier'))
 
         data = {'warehouse_id': warehouse.id, 'product_id': product.id, 'quantity': 10}
-        response = self.client.post(self.supply_url, data)
+        response = self.client.post(self.urls['supply'], data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         stock = Stock.objects.get(warehouse=warehouse, product=product)
         self.assertEqual(stock.quantity, 10)
 
     def test_supply_by_consumer_forbidden(self):
+        # Регистрация и логин потребителя
         self.register_user(self.consumer_data)
         token = self.login_user('consumer', 'testpass123')
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {token}')
 
+        # Создаём склад и товар (для теста, но consumer не может поставлять)
         warehouse = Warehouse.objects.create(name='Warehouse1', owner=User.objects.get(username='consumer'))
         product = Product.objects.create(name='Product1', creator=User.objects.get(username='consumer'))
 
         data = {'warehouse_id': warehouse.id, 'product_id': product.id, 'quantity': 10}
-        response = self.client.post(self.supply_url, data)
+        response = self.client.post(self.urls['supply'], data)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_take_by_consumer(self):
+        # Подготовка: регистрируем supplier, создаём склад/товар/сток
         self.register_user(self.supplier_data)
         token_sup = self.login_user('supplier', 'testpass123')
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {token_sup}')
@@ -108,12 +115,13 @@ class WarehouseAPITestCase(APITestCase):
         product = Product.objects.create(name='Product1', creator=User.objects.get(username='supplier'))
         Stock.objects.create(warehouse=warehouse, product=product, quantity=10)
 
+        # Теперь consumer
         self.register_user(self.consumer_data)
         token_con = self.login_user('consumer', 'testpass123')
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {token_con}')
 
         data = {'warehouse_id': warehouse.id, 'product_id': product.id, 'quantity': 5}
-        response = self.client.post(self.take_url, data)
+        response = self.client.post(self.urls['take'], data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         stock = Stock.objects.get(warehouse=warehouse, product=product)
         self.assertEqual(stock.quantity, 5)
@@ -128,10 +136,11 @@ class WarehouseAPITestCase(APITestCase):
         Stock.objects.create(warehouse=warehouse, product=product, quantity=10)
 
         data = {'warehouse_id': warehouse.id, 'product_id': product.id, 'quantity': 5}
-        response = self.client.post(self.take_url, data)
+        response = self.client.post(self.urls['take'], data)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_take_more_than_available(self):
+        # Подготовка
         self.register_user(self.consumer_data)
         token = self.login_user('consumer', 'testpass123')
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {token}')
@@ -141,9 +150,9 @@ class WarehouseAPITestCase(APITestCase):
         Stock.objects.create(warehouse=warehouse, product=product, quantity=5)
 
         data = {'warehouse_id': warehouse.id, 'product_id': product.id, 'quantity': 10}
-        response = self.client.post(self.take_url, data)
+        response = self.client.post(self.urls['take'], data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_unauthenticated_access(self):
-        response = self.client.post(self.warehouses_url, {'name': 'Unauthorized'})
+        response = self.client.post(self.urls['warehouses'], {'name': 'Unauthorized'})
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
