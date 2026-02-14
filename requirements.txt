@@ -6,15 +6,35 @@
 #
 asgiref==3.11.1
     # via django
+astroid==4.0.4
+    # via pylint
+colorama==0.4.6
+    # via pylint
+dill==0.4.1
+    # via pylint
 django==5.2.11
     # via
     #   -r requirements.in
     #   djangorestframework
 djangorestframework==3.16.1
     # via -r requirements.in
+isort==7.0.0
+    # via pylint
+mccabe==0.7.0
+    # via pylint
+platformdirs==4.8.0
+    # via pylint
+pylint==4.0.4
+    # via -r requirements.in
 sqlparse==0.5.5
     # via django
+tomli==2.4.0
+    # via pylint
+tomlkit==0.14.0
+    # via pylint
 typing-extensions==4.15.0
-    # via asgiref
+    # via
+    #   asgiref
+    #   astroid
 tzdata==2025.3
     # via django

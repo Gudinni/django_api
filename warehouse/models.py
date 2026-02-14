@@ -11,7 +11,7 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
-    
+
 
 class Warehouse(models.Model):
     name = models.CharField(max_length=100)
@@ -19,7 +19,7 @@ class Warehouse(models.Model):
 
     def __str__(self):
         return self.name
-    
+
 
 class Product(models.Model):
     name = models.CharField(max_length=100)
@@ -27,7 +27,7 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
-    
+
 
 class Stock(models.Model):
     warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE)
@@ -39,3 +39,4 @@ class Stock(models.Model):
 
     def __str__(self):
         return f"{self.product} на {self.warehouse}: {self.quantity}"
+    

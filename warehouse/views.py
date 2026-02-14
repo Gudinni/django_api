@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status, viewsets, permissions
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework.generics import CreateAPIView   
+from rest_framework.generics import CreateAPIView
 
 from django.shortcuts import get_object_or_404
 from .models import Warehouse, Product, Stock
@@ -59,7 +59,7 @@ class SupplyView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def post(self, request):
         if request.user.user_type != 'supplier':
-            return Response({"error": "Только поставщики могут поставлять товар"}, 
+            return Response({"error": "Только поставщики могут поставлять товар"},
                           status=status.HTTP_403_FORBIDDEN)
 
         serializer = SupplySerializer(data=request.data)
@@ -81,10 +81,10 @@ class SupplyView(APIView):
 
 class TakeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def post(self, request):
         if request.user.user_type != 'consumer':
-            return Response({"error": "Только потребители могут забирать товар"}, 
+            return Response({"error": "Только потребители могут забирать товар"},
                           status=status.HTTP_403_FORBIDDEN)
 
         serializer = TakeSerializer(data=request.data)
@@ -98,7 +98,7 @@ class TakeView(APIView):
         stock = get_object_or_404(Stock, warehouse=warehouse, product=product)
 
         if stock.quantity < quantity:
-            return Response({"error": "Недостаточно товара на складе"}, 
+            return Response({"error": "Недостаточно товара на складе"},
                           status=status.HTTP_400_BAD_REQUEST)
 
         stock.quantity -= quantity

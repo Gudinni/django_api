@@ -1,0 +1,22 @@
+[MASTER]
+disable=
+    C0114,  # Missing module docstring
+    C0115,  # Missing class docstring
+    C0116,  # Missing function docstring
+    R0903,  # Too few public methods
+    E1101,  # No member (for Django models)
+    W0511,  # TODO comments
+    W0611,  # Unused import
+    C0301,  # Line too long (для миграций)
+    C0103,  # Invalid module name (для миграций как 0001_initial)
+    R0901,  # Too many ancestors (для DRF ViewSets)
+    W0223,  # Abstract method not overridden (для Serializer)
+    E0307,  # __str__ not str 
+
+[MESSAGES CONTROL]
+extension-pkg-whitelist=pydantic  
+ignored-modules=django.db.migrations
+
+
+[FORMAT]
+max-line-length=120

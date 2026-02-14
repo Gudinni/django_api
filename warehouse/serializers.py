@@ -21,7 +21,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             user_type=validated_data['user_type']
         )
         return user
-    
+
 
 class WarehouseSerializer(serializers.ModelSerializer):
     class Meta:
